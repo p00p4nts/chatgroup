@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Chat Group</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dark-mode {
+            background-color: #121212;
+            color: white;
+        }
+        .light-mode {
+            background-color: #f0f0f0;
+            color: black;
+        }
+        #chat-container {
+            width: 80%;
+            max-width: 800px;
+            background-color: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        .dark-mode #chat-container {
+            background-color: #333;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        }
+        #messages {
+            padding: 20px;
+            height: 300px;
+            overflow-y: scroll;
+            background-color: #f9f9f9;
+            transition: background-color 0.3s;
+        }
+        .dark-mode #messages {
+            background-color: #444;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f1f1f1;
+            transition: background-color 0.3s;
+        }
+        .dark-mode .message {
+            background-color: #555;
+        }
+        .message strong {
+            font-weight: bold;
+        }
+        #input-container {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+        }
+        #user-input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            outline: none;
+            font-size: 14px;
+        }
+        #send-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #send-button:hover {
+            background-color: #0056b3;
+        }
+        .admin-controls {
+            margin-top: 20px;
+            display: none;
+            text-align: center;
+        }
+        .admin-controls button {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .admin-controls button:hover {
+            background-color: #c82333;
+        }
+        #theme-toggle {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #theme-toggle:hover {
+            background-color: #218838;
+        }
+        #username-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        #username-container input {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+        }
+        .emoji-picker {
+            margin-top: 10px;
+            text-align: center;
+        }
+        .emoji {
+            cursor: pointer;
+            font-size: 20px;
+            margin: 0 5px;
+        }
+        .error-message {
+            color: red;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <div id="chat-container">
+        <h2 style="text-align:center; padding: 20px;">Modern Chat Group</h2>
+
+        <!-- Message Display Area -->
+        <div id="messages"></div>
+
+        <!-- Input Section -->
+        <div id="input-container">
+            <input type="text" id="user-input" placeholder="Type a message..." />
+            <button id="send-button">Send</button>
+        </div>
+
+        <!-- Emoji Picker -->
+        <div class="emoji-picker">
+            <span class="emoji">😀</span>
+            <span class="emoji">😂</span>
+            <span class="emoji">😍</span>
+            <span class="emoji">🤔</span>
+            <span class="emoji">😎</span>
+        </div>
+
+        <!-- Username Section -->
+        <div id="username-container">
+            <input type="text" id="username-input" placeholder="Enter your username" />
+            <button id="set-username-button">Set Username</button>
+        </div>
+        <div id="error-message" class="error-message"></div>
+
+        <!-- Admin Login -->
+        <div id="username-container">
+            <input type="password" id="admin-password-input" placeholder="Enter Admin Password" />
+            <button id="set-name-button">Log In as Admin</button>
+        </div>
+
+        <!-- Admin Controls -->
+        <div class="admin-controls" id="admin-controls">
+            <button id="kick-button">Kick User</button>
+            <button id="ban-button">Ban User</button>
+            <button id="timeout-button">Timeout User</button>
+        </div>
+
+        <!-- Theme Toggle -->
+        <button id="theme-toggle">Toggle Theme</button>
+    </div>
+
+    <script>
+        // Get HTML elements
+        const sendButton = document.getElementById('send-button');
+        const userInput = document.getElementById('user-input');
+        const messagesContainer = document.getElementById('messages');
+        const setUsernameButton = document.getElementById('set-username-button');
+        const usernameInput = document.getElementById('username-input');
+        const errorMessage = document.getElementById('error-message');
+        const adminPasswordInput = document.getElementById('admin-password-input');
+        const adminControls = document.getElementById('admin-controls');
+        const kickButton = document.getElementById('kick-button');
+        const banButton = document.getElementById('ban-button');
+        const timeoutButton = document.getElementById('timeout-button');
+        const themeToggleButton = document.getElementById('theme-toggle');
+
+        const defaultUsername = 'Anonymous';
+        let username = defaultUsername;
+        let isAdmin = false;
+        const adminPassword = 'password12345';
+
+        // List of blocked words (swear words and brainrot)
+        const blockedWords = [
+            "smurf cat", "john pork", "pronoobq", "baby gronk", "skibidi toilet", "grimace shake",
+            "willy wonk", "nut in bubblegum pink", "oi larva", "2 days no zaza", "freddy fazbear",
+            "fool", "idiot", "stupid", "dumb", "bastard", "asshole", "damn", "crap", "hell", "shit", "bitch"
+        ];
+
+        // Check if a message contains swear words
+        function containsSwearWords(message) {
+            const messageLower = message.toLowerCase();
+            return blockedWords.some(word => messageLower.includes(word));
+        }
+
+        // Handle setting custom username
+        function setUsername() {
+            const inputUsername = usernameInput.value.trim();
+            if (inputUsername === "") {
+                errorMessage.textContent = "Username cannot be empty!";
+            } else if (!isValidUsername(inputUsername)) {
+                errorMessage.textContent = "Username contains invalid words!";
+            } else {
+                username = inputUsername;
+                errorMessage.textContent = "";
+                alert(`Username set to: ${username}`);
+            }
+        }
+
+        // Handle Admin Login
+        function handleAdminLogin() {
+            const inputPassword = adminPasswordInput.value.trim();
+            if (inputPassword === adminPassword) {
+                isAdmin = true;
+                alert('Logged in as admin');
+                adminControls.style.display = 'block';
+                document.getElementById('username-container').style.display = 'none';
+            } else {
+                alert('Invalid password');
+            }
+        }
+
+        // Handle Send Message
+        function sendMessage() {
+            const messageText = userInput.value.trim();
+            if (messageText === "") {
+                return; // Don't send if message is empty
+            }
+
+            // Check if the message contains swear words
+            if (containsSwearWords(messageText)) {
+                alert("Your message contains inappropriate language and cannot be sent.");
+                userInput.value = "";
+                return;
+            }
+
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.innerHTML = `<strong>${username}:</strong> ${messageText}`;
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            userInput.value = "";
+        }
+
+        // Admin control buttons
+        function kickUser() {
+            alert("User kicked.");
+        }
+
+        function banUser() {
+            alert("User banned.");
+        }
+
+        function timeoutUser() {
+            alert("User timed out.");
+        }
+
+        // Toggle Dark/Light Theme
+        function toggleTheme() {
+            if (document.body.classList.contains('light-mode')) {
+                document.body.classList.remove('light-mode');
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+                document.body.classList.add('light-mode');
+            }
+        }
+
+        // Emoji Picker Interaction
+        document.querySelectorAll('.emoji').forEach(emoji => {
+            emoji.addEventListener('click', () => {
+                userInput.value += emoji.textContent;
+            });
+        });
+
+        // Event Listeners
+        setUsernameButton.addEventListener('click', setUsername);
+        sendButton.addEventListener('click', sendMessage);
+        kickButton.addEventListener('click', kickUser);
+        banButton.addEventListener('click', banUser);
+        timeoutButton.addEventListener('click', timeoutUser);
+        themeToggleButton.addEventListener('click', toggleTheme);
+        document.getElementById('set-name-button').addEventListener('click', handleAdminLogin);
+    </script>
+</body>
+</html>
